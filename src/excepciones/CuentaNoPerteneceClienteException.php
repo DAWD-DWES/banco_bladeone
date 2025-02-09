@@ -2,9 +2,10 @@
 
 namespace App\excepciones;
 
-use Exception;
+use \Exception;
 
-class CuentaNoEncontradaException extends Exception {
+
+class CuentaNoPerteneceClienteException extends Exception {
 
     private $dni;
     private $idCuenta;

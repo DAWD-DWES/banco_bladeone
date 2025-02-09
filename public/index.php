@@ -2,7 +2,6 @@
 
 include_once '../src/error_handler.php';
 require_once '../vendor/autoload.php';
-require_once '../src/error_handler.php';
 require_once '../src/cargadatos.php';
 
 use App\bd\BD;
@@ -11,9 +10,7 @@ use App\dao\{
     CuentaDAO,
     ClienteDAO
 };
-use App\modelo\{
-    Banco,
-};
+use App\modelo\Banco;
 use eftec\bladeone\BladeOne;
 
 $vistas = __DIR__ . '/../vistas';
@@ -27,11 +24,8 @@ $operacionDAO = new OperacionDAO($pdo);
 $cuentaDAO = new CuentaDAO($pdo, $operacionDAO);
 $clienteDAO = new ClienteDAO($pdo, $cuentaDAO);
 
-$banco = new Banco($clienteDAO, $cuentaDAO, $operacionDAO, "Midas");
+$banco = new Banco($clienteDAO, $cuentaDAO, $operacionDAO, "Midas", [3, 1000], [1.5, 0.5]);
 
-$banco->setComisionCC(5);
-$banco->setMinSaldoComisionCC(1000);
-$banco->setInteresCA(2);
 if (filter_has_var(INPUT_POST, 'creardatos')) {
     cargaDatos($banco);
     echo $blade->run('principal');
@@ -41,7 +35,7 @@ if (filter_has_var(INPUT_POST, 'creardatos')) {
     } elseif (filter_has_var(INPUT_POST, 'infocliente')) {
         $dni = filter_input(INPUT_POST, 'dnicliente');
         $cliente = $banco->obtenerCliente($dni);
-        $cuentas = array_map(fn($idCuenta) => $cuentaDAO->obtenerPorId($idCuenta), $cliente->getIdCuentas());
+        $cuentas = array_map(fn($idCuenta) => $banco->obtenerCuenta($idCuenta), $cliente->getIdCuentas());
         echo $blade->run('datos_cliente', compact('cliente', 'cuentas'));
     } elseif (filter_has_var(INPUT_POST, 'infocuenta')) {
         $idCuenta = filter_input(INPUT_POST, 'idcuenta');
