@@ -25,4 +25,16 @@ class BD
         }
         return self::$bd;
     }
+    
+    public function beginTransaction() {
+        self::bd->beginTransaction();
+    }
+
+    public function commit() {
+        self::bd->commit();
+    }
+
+    public function rollback() {
+        self::bd->rollBack();
+    }
 }

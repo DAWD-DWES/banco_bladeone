@@ -15,7 +15,7 @@ class ClienteDAO {
      * Conexión a la base de datos
      * @var PDO
      */
-    private PDO $pdo;
+    private PDO $bd;
 
     /**
      * DAO para gestionar cuentas 
@@ -23,70 +23,9 @@ class ClienteDAO {
      */
     private CuentaDAO $cuentaDAO;
 
-    public function __construct($pdo, $cuentaDAO) {
-        $this->pdo = $pdo;
+    public function __construct($bd, $cuentaDAO) {
+        $this->bd = $bd;
         $this->cuentaDAO = $cuentaDAO;
-    }
-
-    /**
-     * Obtener un cliente dado su identificador
-     * 
-     * @param int $id
-     * @return Cliente|null
-     */
-    public function recuperaPorId(int $id): ?Cliente {
-        $sql = "SELECT id, dni, nombre, apellido1, apellido2, fecha_nacimiento as fechaNacimiento, telefono FROM clientes WHERE id = :id;";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['id' => $id]);
-        $stmt->setFetchMode(PDO::FETCH_CLASS, Cliente::class);
-        $cliente = $stmt->fetch();
-        if ($cliente) {
-            $cliente->setIdCuentas($this->cuentaDAO->recuperaIdCuentasPorClienteId($this->getId()));
-        }
-        return $cliente ?: null;
-    }
-
-    /**
-     * Obtener un cliente dado su DNI
-     * 
-     * @param string $dni
-     * @return Cliente|null
-     */
-    public function recuperaPorDNI(string $dni): ?Cliente {
-        $sql = "SELECT id, dni, nombre, apellido1, apellido2, fecha_nacimiento as fechaNacimiento, telefono FROM clientes WHERE dni = :dni;";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['dni' => $dni]);
-        $stmt->setFetchMode(PDO::FETCH_CLASS, Cliente::class);
-        $cliente = $stmt->fetch();
-        if ($cliente) {
-            $cliente->setIdCuentas($this->cuentaDAO->recuperaIdCuentasPorClienteId($cliente->getId()));
-        }
-        return $cliente ?: null;
-    }
-
-    /**
-     * Obtiene la lista de todos los clientes
-     * @return array
-     */
-    public function recuperaTodos(): array {
-        $sql = "SELECT id, dni, nombre, apellido1, apellido2, fecha_nacimiento as fechaNacimiento, telefono FROM clientes;";
-        $stmt = $this->pdo->query($sql);
-        $clientes = $stmt->fetchAll(PDO::FETCH_CLASS, Cliente::class);
-        array_walk($clientes, function ($cliente) {
-            $cliente->setIdCuentas($this->cuentaDAO->recuperaIdCuentasPorClienteId($cliente->getId()));
-        });
-        return $clientes;
-    }
-    
-     /**
-     * Obtiene el número de clientes en la BD
-     * @return int Número de clientes
-     */
-    public function numeroClientes(): int {
-        $sql = "SELECT count(*) FROM clientes;";
-        $stmt = $this->pdo->query($sql);
-        $numero = $stmt->fetchColumn();
-        return $numero;
     }
 
     /**
@@ -95,7 +34,7 @@ class ClienteDAO {
      */
     public function crear(Cliente $cliente): bool {
         $sql = "INSERT INTO clientes (dni, nombre, apellido1, apellido2, fecha_nacimiento, telefono) VALUES (:dni, :nombre, :apellido1, :apellido2, :fecha_nacimiento, :telefono);";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->bd->prepare($sql);
         $result = $stmt->execute([
             'dni' => $cliente->getDni(),
             'nombre' => $cliente->getNombre(),
@@ -105,7 +44,7 @@ class ClienteDAO {
             'telefono' => $cliente->getTelefono()
         ]);
         if ($result) {
-            $cliente->setId($this->pdo->lastInsertId());
+            $cliente->setId($this->bd->lastInsertId());
         }
         return $result;
     }
@@ -117,7 +56,7 @@ class ClienteDAO {
      */
     public function modificar(Cliente $cliente): bool {
         $sql = "UPDATE clientes SET dni = :dni, nombre = :nombre, apellido1 = :apellido1, apellido2 = :apellido2, fecha_nacimiento = :fecha_nacimiento, telefono = :telefono WHERE id = :id;";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->bd->prepare($sql);
         $result = $stmt->execute([
             'id' => $cliente->getId(),
             'dni' => $cliente->getDni(),
@@ -136,8 +75,69 @@ class ClienteDAO {
      */
     public function eliminar(int $id): bool {
         $sql = "DELETE FROM clientes WHERE id = :id;";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->bd->prepare($sql);
         $result = $stmt->execute(['id' => $id]);
         return $result;
+    }
+
+    /**
+     * Obtener un cliente dado su identificador
+     * 
+     * @param int $id
+     * @return Cliente|null
+     */
+    public function recuperaPorId(int $id): ?Cliente {
+        $sql = "SELECT id, dni, nombre, apellido1, apellido2, fecha_nacimiento as fechaNacimiento, telefono FROM clientes WHERE id = :id;";
+        $stmt = $this->bd->prepare($sql);
+        $stmt->execute(['id' => $id]);
+        $stmt->setFetchMode(PDO::FETCH_CLASS, Cliente::class);
+        $cliente = $stmt->fetch();
+        if ($cliente) {
+            $cliente->setIdCuentas($this->cuentaDAO->recuperaIdCuentasPorClienteId($this->getId()));
+        }
+        return $cliente ?: null;
+    }
+
+    /**
+     * Obtener un cliente dado su DNI
+     * 
+     * @param string $dni
+     * @return Cliente|null
+     */
+    public function recuperaPorDNI(string $dni): ?Cliente {
+        $sql = "SELECT id, dni, nombre, apellido1, apellido2, fecha_nacimiento as fechaNacimiento, telefono FROM clientes WHERE dni = :dni;";
+        $stmt = $this->bd->prepare($sql);
+        $stmt->execute(['dni' => $dni]);
+        $stmt->setFetchMode(PDO::FETCH_CLASS, Cliente::class);
+        $cliente = $stmt->fetch();
+        if ($cliente) {
+            $cliente->setIdCuentas($this->cuentaDAO->recuperaIdCuentasPorClienteId($cliente->getId()));
+        }
+        return $cliente ?: null;
+    }
+
+    /**
+     * Obtiene la lista de todos los clientes
+     * @return array
+     */
+    public function recuperaTodos(): array {
+        $sql = "SELECT id, dni, nombre, apellido1, apellido2, fecha_nacimiento as fechaNacimiento, telefono FROM clientes;";
+        $stmt = $this->bd->query($sql);
+        $clientes = $stmt->fetchAll(PDO::FETCH_CLASS, Cliente::class);
+        array_walk($clientes, function ($cliente) {
+            $cliente->setIdCuentas($this->cuentaDAO->recuperaIdCuentasPorClienteId($cliente->getId()));
+        });
+        return $clientes;
+    }
+
+    /**
+     * Obtiene el número de clientes en la BD
+     * @return int Número de clientes
+     */
+    public function numeroClientes(): int {
+        $sql = "SELECT count(*) FROM clientes;";
+        $stmt = $this->bd->query($sql);
+        $numero = $stmt->fetchColumn();
+        return $numero;
     }
 }
