@@ -30,7 +30,7 @@
             @foreach($cuenta->getOperaciones() as $operacion)
             <tr>
                 <td>{{ $operacion->getTipo()->value}}</td>
-                <td>{{ $operacion->getFecha()->format('Y-M-d') }}</td>
+                <td>{{ $operacion->getFecha()->format('d-M-Y') }}</td>
                 <td>{{ number_format($operacion->getCantidad(), 2) }} €</td>
                 <td>{{ htmlspecialchars($operacion->getDescripcion()) }}</td>
             </tr>
