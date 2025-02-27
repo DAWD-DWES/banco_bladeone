@@ -1,9 +1,8 @@
 @extends('app')
-
 @section('contenido')
-
 <div class=" my-3">
     <h1>Información de la Cuenta</h1>
+    <p><strong>DNI Cliente:</strong> {{ $cliente->getDNI() }}</p>
     <p><strong>Id:</strong> {{ $cuenta->getId() }}</p>
     <p><strong>Tipo:</strong> {{ strtoupper ($cuenta->getTipo()->value) }}</p>
     <p><strong>Saldo:</strong> {{ $cuenta->getSaldo() }} €</p>

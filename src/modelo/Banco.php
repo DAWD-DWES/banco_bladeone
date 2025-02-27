@@ -241,6 +241,22 @@ class Banco {
     }
 
     /**
+     * Obtiene el objeto cliente del banco
+     * 
+     * @param int $idCliente
+     * @return Cliente
+     * @throws ClienteNoEncontradoException
+     */
+    public function obtenerClientePorId(int $idCliente): ?Cliente {
+        $cliente = $this->clienteDAO->recuperaPorId($idCliente);
+        if ($cliente) {
+            return $cliente;
+        } else {
+            throw new ClienteNoEncontradoException($dni);
+        }
+    }
+
+    /**
      * Crea una cuenta corriente de un cliente del banco
      * 
      * @param string $dni

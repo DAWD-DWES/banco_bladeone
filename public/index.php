@@ -11,14 +11,33 @@ use App\dao\{
     ClienteDAO
 };
 use App\modelo\Banco;
+use App\excepciones\ClienteNoEncontradoException;
+use \App\excepciones\CuentaNoEncontradaException;
 use eftec\bladeone\BladeOne;
+use Dotenv\Dotenv;
+
+// Inicializa el acceso a las variables de entorno
+
+$dotenv = Dotenv::createImmutable(__DIR__ . "/../");
+$dotenv->load();
 
 $vistas = __DIR__ . '/../vistas';
 $cache = __DIR__ . '/../cache';
 $blade = new BladeOne($vistas, $cache, BladeOne::MODE_DEBUG);
 $blade->setBaseURL("http://{$_SERVER['SERVER_NAME']}:{$_SERVER['SERVER_PORT']}/");
 
-$bd = BD::getConexion();
+// Establece conexión a la base de datos PDO
+try {
+    $host = $_ENV['DB_HOST'];
+    $port = $_ENV['DB_PORT'];
+    $database = $_ENV['DB_DATABASE'];
+    $usuario = $_ENV['DB_USUARIO'];
+    $password = $_ENV['DB_PASSWORD'];
+    $bd = BD::getConexion($host, $port, $database, $usuario, $password);
+} catch (PDOException $error) {
+    echo $blade->run("cnxbderror", compact('error'));
+    die;
+}
 
 $operacionDAO = new OperacionDAO($bd);
 $cuentaDAO = new CuentaDAO($bd, $operacionDAO);
@@ -34,13 +53,24 @@ if (filter_has_var(INPUT_POST, 'creardatos')) {
         echo $blade->run('carga_datos');
     } elseif (filter_has_var(INPUT_POST, 'infocliente')) {
         $dni = filter_input(INPUT_POST, 'dnicliente');
-        $cliente = $banco->obtenerCliente($dni);
-        $cuentas = array_map(fn($idCuenta) => $banco->obtenerCuenta($idCuenta), $cliente->getIdCuentas());
-        echo $blade->run('datos_cliente', compact('cliente', 'cuentas'));
+        try {
+            $cliente = $banco->obtenerCliente($dni);
+            $cuentas = array_map(fn($idCuenta) => $banco->obtenerCuenta($idCuenta), $cliente->getIdCuentas());
+            echo $blade->run('datos_cliente', compact('cliente', 'cuentas'));
+        } catch (ClienteNoEncontradoException $ex) {
+            echo $blade->run('principal', ['dniCliente' => $dni, 'errorCliente' => true]);
+            exit;
+        }
     } elseif (filter_has_var(INPUT_POST, 'infocuenta')) {
         $idCuenta = filter_input(INPUT_POST, 'idcuenta');
-        $cuenta = $banco->obtenerCuenta($idCuenta);
-        echo $blade->run('datos_cuenta', compact('cuenta'));
+        try {
+            $cuenta = $banco->obtenerCuenta((int) $idCuenta);
+            $cliente = $banco->obtenerClientePorId($cuenta->getIdCliente());
+            echo $blade->run('datos_cuenta', compact('cuenta', 'cliente'));
+        } catch (CuentaNoEncontradaException $ex) {
+            echo $blade->run('principal', ['idCuenta' => $idCuenta, 'errorCuenta' => true]);
+            exit;
+        }
     } elseif (filter_has_var(INPUT_GET, 'pettransferencia')) {
         echo $blade->run('transferencia');
     } elseif (filter_has_var(INPUT_POST, 'transferencia')) {
