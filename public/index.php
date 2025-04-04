@@ -12,7 +12,7 @@ use App\dao\{
 };
 use App\modelo\Banco;
 use App\excepciones\ClienteNoEncontradoException;
-use \App\excepciones\CuentaNoEncontradaException;
+use App\excepciones\CuentaNoEncontradaException;
 use eftec\bladeone\BladeOne;
 use Dotenv\Dotenv;
 
